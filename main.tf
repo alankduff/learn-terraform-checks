@@ -163,3 +163,25 @@ resource "aws_acm_certificate" "cert" {
   private_key      = tls_private_key.example.private_key_pem
   certificate_body = tls_self_signed_cert.terramino.cert_pem
 }
+
+check "certificate" {
+  assert {
+    condition     = aws_acm_certificate.cert.status == "ISSUED"
+    #condition     = aws_acm_certificate.cert.status == "ERRORED"
+    error_message = "Certificate status is ${aws_acm_certificate.cert.status}"
+  }
+}
+
+
+check "response" {
+  data "http" "terramino" {
+    url      = "https://${aws_lb.terramino.dns_name}"
+    insecure = true
+  }
+
+  assert {
+    condition     = data.http.terramino.status_code == 200
+    error_message = "Terramino response is ${data.http.terramino.status_code}"
+  }
+}
+
